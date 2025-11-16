@@ -1,0 +1,44 @@
+inputs:
+  - id: some_emails
+    type: list
+    items:
+      - "user1@example.com"
+      - "user2@example.com"
+      - "user3@example.com"
+      - "user4@example.com"
+      
+
+jobs:
+  - id: hello_world_printer_job
+    type: espresso_job
+    module: testing.test
+    function: print_hello_world
+    schedule:
+      kind: cron
+      cron: "0 9 * * *"      # every day at 09:00
+    max_retries: 3
+    retry_delay_seconds: 60
+
+  - id: iterator_job
+    type: espresso_job
+    module: testing.test
+    function: loop_n_times
+    args:
+      - 15
+    schedule:
+      kind: interval
+      every_seconds: 15     # every 15 seconds
+
+  - id: send_welcome_emails_job
+    type: espresso_job
+    module: testing.test
+    function: send_welcome_email
+    trigger:
+      kind: input
+      input_id: some_emails
+    schedule:
+      kind: interval
+      every_seconds: 20
+    max_retries: 4
+    retry_delay_seconds: 90
+    batch_size: 5

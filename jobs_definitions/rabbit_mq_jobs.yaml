@@ -1,0 +1,17 @@
+inputs:
+    - id: rabbit_orders
+      type: rabbitmq
+      url: amqp://guest:guest@rabbitmq:5672/
+      queue: orders_queue
+      prefetch_count: 10
+
+jobs:
+    - id: process_orders_job
+      type: espresso_job
+      module: testing.test
+      function: process_order
+      trigger:
+        kind: input
+        input_id: rabbit_orders
+      schedule:
+        kind: on_demand

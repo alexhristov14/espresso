@@ -1,0 +1,48 @@
+inputs:
+  - id: static_user_ids
+    type: list
+    items:
+      - 100
+      - 101
+      - 102
+
+  - id: rabbit_orders
+    type: rabbitmq
+    url: amqp://guest:guest@localhost:5672/
+    queue: orders_queue
+    prefetch_count: 10
+
+jobs:
+  - id: just_run
+    type: espresso_job
+    module: testing.test
+    function: just_run
+    schedule:
+      kind: interval
+      every_seconds: 10
+
+  - id: send_welcome_email_job
+    type: espresso_job
+    module: testing.test
+    function: send_welcome_email
+    trigger:
+      kind: input
+      input_id: static_user_ids
+    schedule:
+      kind: interval
+      every_seconds: 5
+    max_retries: 5
+    retry_delay_seconds: 120
+
+  - id: process_orders_job
+    type: espresso_job
+    module: testing.test
+    function: process_order
+    trigger:
+      kind: input
+      input_id: rabbit_orders
+    schedule:
+      kind: interval
+      every_seconds: 15
+    max_retries: 3
+    retry_delay_seconds: 60
