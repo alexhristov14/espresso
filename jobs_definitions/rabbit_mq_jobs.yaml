@@ -10,6 +10,7 @@ jobs:
       type: espresso_job
       module: testing.test
       function: process_order
+      batch_size: 5
       trigger:
         kind: input
         input_id: rabbit_orders

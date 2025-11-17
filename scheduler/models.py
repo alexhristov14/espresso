@@ -28,6 +28,7 @@ class EspressoJobDefinition:
     module: str
     function: str
     schedule: EspressoSchedule
+    batch_size: Optional[int] = None
     trigger: Optional[EspressoTrigger] = None
     args: list = None
     kwargs: dict = None

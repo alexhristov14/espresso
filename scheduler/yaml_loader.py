@@ -68,6 +68,7 @@ def load_jobs_from_yaml(path: str | Path):
                 type=raw_job["type"],
                 module=raw_job["module"],
                 function=raw_job["function"],
+                batch_size=raw_job.get("batch_size", None),
                 schedule=schedule,
                 trigger=trigger,
                 args=raw_job.get("args", []),
