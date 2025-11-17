@@ -1,6 +1,5 @@
 import logging
-
-import time
+import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, List
 from .models import EspressoJobDefinition, EspressoInputDefinition
@@ -31,11 +30,11 @@ class EspressoScheduler:
                 definition=job, next_run_time=next_run
             )
 
-    def _run(self, state: EspressoJobRuntimeState):
+    async def _run(self, state: EspressoJobRuntimeState):
         job = state.definition
         state.last_run_time = datetime.now()
 
-        future = self.executor.submit(state, self.input_manager)
+        task = await self.executor.submit(state, self.input_manager)
 
         def _callback(fut):
             try:
@@ -49,13 +48,12 @@ class EspressoScheduler:
                     delay = job.retry_delay_seconds
                     state.next_run_time = datetime.now() + timedelta(seconds=delay)
 
-        future.add_done_callback(_callback)
+        task.add_done_callback(_callback)
 
-    def run_forever(self):
+    async def run_forever(self):
         while True:
             now = datetime.now()
 
-            # Scheduled based jobs
             for job_id, job_state in list(self.job_states.items()):
                 job = job_state.definition
 
@@ -64,24 +62,24 @@ class EspressoScheduler:
                         input_id = job.trigger.input_id
 
                         if job_state.next_run_time and now >= job_state.next_run_time:
-                            if input_id and self.input_manager.has_data(input_id):
+
+                            if input_id and await self.input_manager.has_data(input_id):
                                 logger.info(
                                     f"Triggering input-based job {job_id} (scheduled)"
                                 )
-                                self._run(job_state)
+                                await self._run(job_state)
                             else:
                                 logger.debug(
                                     f"No data available for job {job_id}, scheduling next check"
                                 )
-                                job_state.schedule_next_run(datetime.now())
+                                job_state.schedule_next_run(now - timedelta(seconds=1))
                     continue
 
-                # Handle scheduled jobs
                 if job_state.next_run_time is None:
                     continue
 
                 if now >= job_state.next_run_time:
                     logger.info(f"Scheduling job {job_id} for execution")
-                    self._run(job_state)
+                    await self._run(job_state)
 
-            time.sleep(self.tick_seconds)
+            await asyncio.sleep(self.tick_seconds)

@@ -30,5 +30,7 @@ class EspressoJobRuntimeState:
                 )
         elif schedule.kind == "one_off" and schedule.run_at:
             self.next_run_time = schedule.run_at
+        elif schedule.kind == "on_demand":
+            self.next_run_time = current_time
         else:
             self.next_run_time = None

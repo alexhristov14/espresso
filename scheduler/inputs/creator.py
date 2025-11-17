@@ -1,9 +1,14 @@
-from ..models import EspressoInputDefinition, EspressoListInputDefinition
+from ..models import EspressoInputDefinition, EspressoListInputDefinition, EspressoRabbitMQInputDefinition
 from typing import List, Optional, Any
 
 
 def create_input_def(
-    id: str, type: str, items: Optional[List[Any]]
+    id: str, 
+    type: str, 
+    items: Optional[List[Any]] = None, 
+    rabbitmq_url: Optional[str] = None, 
+    rabbitmq_queue: Optional[str] = None,
+    rabbitmq_prefetch_count: Optional[int] = None
 ) -> EspressoInputDefinition:
     """
     Factory function to create input definitions based on type.
@@ -46,5 +51,13 @@ def create_input_def(
 
     if type == "list":
         return EspressoListInputDefinition(id=id, type=type, items=items or [])
+    elif type == "rabbitmq":
+        return EspressoRabbitMQInputDefinition(
+            id=id,
+            type=type,
+            url=rabbitmq_url or "amqp://guest:guest@localhost/",
+            queue=rabbitmq_queue or "default_queue",
+            prefetch_count=rabbitmq_prefetch_count or 10,
+        )
     else:
         return EspressoInputDefinition(id=id, type=type)

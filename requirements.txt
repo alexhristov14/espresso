@@ -1,3 +1,4 @@
 pyyaml
-pika
+aio-pika
 pytest
+pytest-asyncio
