@@ -25,7 +25,7 @@ async def main():
 
     print(f"Loaded {len(jobs)} jobs and {len(inputs)} inputs.")
 
-    sched = EspressoScheduler(jobs, inputs, tick_seconds=3)
+    sched = EspressoScheduler(jobs, inputs, num_workers=10)
     await sched.run_forever()
 
 

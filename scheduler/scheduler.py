@@ -16,9 +16,10 @@ class EspressoScheduler:
         jobs: List[EspressoJobDefinition],
         inputs: List[EspressoInputDefinition],
         tick_seconds: int = 1,
+        num_workers: int = 5,
     ):
         self.tick_seconds = tick_seconds
-        self.executor = EspressoJobExecutor()
+        self.executor = EspressoJobExecutor(num_workers=num_workers)
         self.input_manager = EspressoInputManager(inputs)
 
         now = datetime.now()
