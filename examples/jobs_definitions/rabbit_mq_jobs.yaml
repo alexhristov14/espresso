@@ -1,7 +1,7 @@
 inputs:
     - id: rabbit_orders
       type: rabbitmq
-      url: amqp://guest:guest@rabbitmq:5672/
+      url: amqp://guest:guest@rabbitmq-server:5672/
       queue: orders_queue
       prefetch_count: 10
 

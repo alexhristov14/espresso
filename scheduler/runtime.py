@@ -1,9 +1,10 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Literal
 from .models import EspressoJobDefinition
 from .utils import _get_next_cron_time
 
+JobStatus = Literal["active", "paused", "stopped", "disabled"]
 
 @dataclass
 class EspressoJobRuntimeState:
@@ -13,6 +14,11 @@ class EspressoJobRuntimeState:
     retries_attempted: int = 0
     is_running: bool = False
     last_error: Optional[str] = None
+    status: JobStatus = "active"
+    execution_count: int = 0
+    total_execution_time: float = 0.0
+    last_execution_duration: Optional[float] = None
+    created_at: datetime = field(default_factory=datetime.now)
 
     def schedule_next_run(self, current_time: datetime):
         schedule = self.definition.schedule
@@ -34,3 +40,30 @@ class EspressoJobRuntimeState:
             self.next_run_time = current_time
         else:
             self.next_run_time = None
+
+    def can_execute(self) -> bool:
+        """Check if job can be executed based on status."""
+        return self.status == "active" and not self.is_running
+
+    def pause(self):
+        """Pause the job."""
+        if self.status == "active":
+            self.status = "paused"
+
+    def resume(self):
+        """Resume a paused job."""
+        if self.status == "paused":
+            self.status = "active"
+
+    def stop(self):
+        """Stop the job (can be resumed later)."""
+        self.status = "stopped"
+
+    def disable(self):
+        """Disable the job permanently."""
+        self.status = "disabled"
+
+    def enable(self):
+        """Enable a disabled job."""
+        if self.status == "disabled":
+            self.status = "active"

@@ -8,15 +8,19 @@ setup(
     packages=find_packages(exclude=["testing", "jobs_definitions"]),
     install_requires=[
         "pyyaml",
-        "pika",
+        "aio-pika",
+        "fastapi",
+        "uvicorn[standard]",
+        "pydantic",
     ],
     extras_require={
         "dev": [
             "ruff",
             "pytest",
+            "pytest-asyncio",
         ],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

@@ -3,6 +3,30 @@
 This project consists of asynchronous job scheduling which can be customized inside a Python script
 or loaded from a YAML File.
 
+## Features
+
+- **Flexible Scheduling**: Support for cron, interval, one-off, and on-demand job execution
+- **Multiple Input Sources**: List-based and RabbitMQ inputs (extensible)
+- **Runtime Control**: REST API for managing jobs at runtime (pause, resume, trigger, etc.)
+- **Execution Tracking**: Built-in metrics for job execution statistics
+- **Async-First**: Built on asyncio for high-performance concurrent execution
+- **Retry Logic**: Automatic retry with configurable delays
+- **Worker Pool**: Configurable concurrent worker execution
+
+## Quick Start
+
+Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+Run the scheduler with API:
+```bash
+python server.py
+```
+
+The scheduler will start along with a REST API on http://localhost:8000. 
+Visit http://localhost:8000/docs for interactive API documentation.
 
 ## Basic Usage
 
@@ -73,13 +97,58 @@ async def main():
     await sched.run_forever()
 ```
 
+## Runtime Control
+
+The scheduler includes a REST API for runtime job management. See [RUNTIME_CONTROL.md](RUNTIME_CONTROL.md) for detailed documentation.
+
+### Available API Endpoints
+
+- `GET /jobs` - List all jobs with status and metrics
+- `GET /jobs/{job_id}` - Get specific job details
+- `POST /jobs/{job_id}/pause` - Pause a job
+- `POST /jobs/{job_id}/resume` - Resume a paused job
+- `POST /jobs/{job_id}/stop` - Stop a job
+- `POST /jobs/{job_id}/enable` - Enable a disabled job
+- `POST /jobs/{job_id}/trigger` - Manually trigger job execution
+- `GET /health` - Scheduler health check
+
+### Example: Control Jobs via API
+
+```python
+import requests
+
+# Pause a job
+requests.post("http://localhost:8000/jobs/process_orders_job/pause")
+
+# Manually trigger a job
+requests.post("http://localhost:8000/jobs/process_orders_job/trigger")
+
+# Check job status
+response = requests.get("http://localhost:8000/jobs/process_orders_job")
+job = response.json()
+print(f"Executions: {job['execution_count']}, Status: {job['status']}")
+```
+
+Run the demo:
+```bash
+python examples/runtime_control_demo.py
+```
+
 ## The different types of jobs and inputs currently supported
 
 ### Job Types
--   on_demand -> will act on input the moment it sees it. for queues, think of it as popping the moment it pushes
--   interval -> every x seconds, will grab a batch and act upon it
--   cron -> same as cron jobs. run the function at a specific moment (9:00AM every weekday = 0 9 * * 1-5) # minute - hour - day of the month - month - weekday
+-   **on_demand** - Will act on input the moment it sees it. For queues, think of it as popping the moment it pushes
+-   **interval** - Every x seconds, will grab a batch and act upon it
+-   **cron** - Same as cron jobs. Run the function at a specific moment (9:00AM every weekday = 0 9 * * 1-5)
+    - Format: minute - hour - day of the month - month - weekday
+-   **one_off** - Run once at a specific datetime
 
 ### Input Types
--   Lists (EspressoListInputDefinition)
--   RabbitMQ (EspressoRabbitMQInputDefinition)
+-   **Lists** (EspressoListInputDefinition) - Process items from a static list
+-   **RabbitMQ** (EspressoRabbitMQInputDefinition) - Consume messages from RabbitMQ queues
+
+### Job States
+-   **active** - Job is running normally according to schedule
+-   **paused** - Job is temporarily paused (can be resumed)
+-   **stopped** - Job is stopped
+-   **disabled** - Job is disabled (typically after exceeding max retries)

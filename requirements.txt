@@ -2,3 +2,7 @@ pyyaml
 aio-pika
 pytest
 pytest-asyncio
+fastapi
+uvicorn[standard]
+pydantic
+requests

@@ -4,7 +4,7 @@ from aio_pika import connect_robust, Message
 
 async def main():
     # Connect to RabbitMQ and send test messages
-    connection = await connect_robust("amqp://guest:guest@rabbitmq:5672/")
+    connection = await connect_robust("amqp://guest:guest@rabbitmq-server:5672/")
     channel = await connection.channel()
     await channel.declare_queue("orders_queue", durable=True)
 
