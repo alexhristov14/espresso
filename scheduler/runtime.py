@@ -6,6 +6,7 @@ from .utils import _get_next_cron_time
 
 JobStatus = Literal["active", "paused", "stopped", "disabled"]
 
+
 @dataclass
 class EspressoJobRuntimeState:
     definition: EspressoJobDefinition

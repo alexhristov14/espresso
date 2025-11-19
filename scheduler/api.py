@@ -1,6 +1,7 @@
 """
 REST API for Espresso Job Scheduler runtime control.
 """
+
 import logging
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -59,14 +60,16 @@ class HealthResponse(BaseModel):
 
 def create_api(scheduler: EspressoScheduler) -> FastAPI:
     """Create FastAPI application with scheduler control endpoints."""
-    
+
     app = FastAPI(
         title="Espresso Job Scheduler API",
         description="Runtime control API for managing scheduled jobs",
-        version="0.1.0"
+        version="0.1.0",
     )
 
-    def _state_to_response(job_id: str, state: EspressoJobRuntimeState) -> JobStateResponse:
+    def _state_to_response(
+        job_id: str, state: EspressoJobRuntimeState
+    ) -> JobStateResponse:
         """Convert runtime state to API response model."""
         return JobStateResponse(
             id=job_id,
@@ -84,7 +87,7 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
             last_execution_duration=state.last_execution_duration,
             created_at=state.created_at,
             schedule_kind=state.definition.schedule.kind,
-            enabled=state.definition.enabled
+            enabled=state.definition.enabled,
         )
 
     @app.get("/", tags=["General"])
@@ -93,7 +96,7 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
         return {
             "message": "Espresso Job Scheduler API",
             "version": "0.1.0",
-            "docs": "/docs"
+            "docs": "/docs",
         }
 
     @app.get("/health", response_model=HealthResponse, tags=["General"])
@@ -103,7 +106,7 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
         active = sum(1 for s in jobs.values() if s.status == "active")
         paused = sum(1 for s in jobs.values() if s.status == "paused")
         running = sum(1 for s in jobs.values() if s.is_running)
-        
+
         return HealthResponse(
             status="healthy",
             scheduler_running=scheduler._running,
@@ -112,7 +115,7 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
             paused_jobs=paused,
             running_jobs=running,
             num_workers=scheduler.executor.num_workers,
-            tick_seconds=scheduler.tick_seconds
+            tick_seconds=scheduler.tick_seconds,
         )
 
     @app.get("/jobs", response_model=JobListResponse, tags=["Jobs"])
@@ -120,8 +123,7 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
         """List all jobs with their current state."""
         jobs = await scheduler.list_jobs()
         job_responses = {
-            job_id: _state_to_response(job_id, state)
-            for job_id, state in jobs.items()
+            job_id: _state_to_response(job_id, state) for job_id, state in jobs.items()
         }
         return JobListResponse(jobs=job_responses, total=len(job_responses))
 
@@ -132,71 +134,73 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
         if not state:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Job '{job_id}' not found"
+                detail=f"Job '{job_id}' not found",
             )
         return _state_to_response(job_id, state)
 
-    @app.post("/jobs/{job_id}/pause", response_model=JobActionResponse, tags=["Job Control"])
+    @app.post(
+        "/jobs/{job_id}/pause", response_model=JobActionResponse, tags=["Job Control"]
+    )
     async def pause_job(job_id: str):
         """Pause a job (prevents it from running while keeping schedule)."""
         success = await scheduler.pause_job(job_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Job '{job_id}' not found"
+                detail=f"Job '{job_id}' not found",
             )
         return JobActionResponse(
-            success=True,
-            message=f"Job '{job_id}' paused successfully",
-            job_id=job_id
+            success=True, message=f"Job '{job_id}' paused successfully", job_id=job_id
         )
 
-    @app.post("/jobs/{job_id}/resume", response_model=JobActionResponse, tags=["Job Control"])
+    @app.post(
+        "/jobs/{job_id}/resume", response_model=JobActionResponse, tags=["Job Control"]
+    )
     async def resume_job(job_id: str):
         """Resume a paused job."""
         success = await scheduler.resume_job(job_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Job '{job_id}' not found"
+                detail=f"Job '{job_id}' not found",
             )
         return JobActionResponse(
-            success=True,
-            message=f"Job '{job_id}' resumed successfully",
-            job_id=job_id
+            success=True, message=f"Job '{job_id}' resumed successfully", job_id=job_id
         )
 
-    @app.post("/jobs/{job_id}/stop", response_model=JobActionResponse, tags=["Job Control"])
+    @app.post(
+        "/jobs/{job_id}/stop", response_model=JobActionResponse, tags=["Job Control"]
+    )
     async def stop_job(job_id: str):
         """Stop a job (can be resumed later)."""
         success = await scheduler.stop_job(job_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Job '{job_id}' not found"
+                detail=f"Job '{job_id}' not found",
             )
         return JobActionResponse(
-            success=True,
-            message=f"Job '{job_id}' stopped successfully",
-            job_id=job_id
+            success=True, message=f"Job '{job_id}' stopped successfully", job_id=job_id
         )
 
-    @app.post("/jobs/{job_id}/enable", response_model=JobActionResponse, tags=["Job Control"])
+    @app.post(
+        "/jobs/{job_id}/enable", response_model=JobActionResponse, tags=["Job Control"]
+    )
     async def enable_job(job_id: str):
         """Enable a disabled job."""
         success = await scheduler.enable_job(job_id)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Job '{job_id}' not found"
+                detail=f"Job '{job_id}' not found",
             )
         return JobActionResponse(
-            success=True,
-            message=f"Job '{job_id}' enabled successfully",
-            job_id=job_id
+            success=True, message=f"Job '{job_id}' enabled successfully", job_id=job_id
         )
 
-    @app.post("/jobs/{job_id}/trigger", response_model=JobActionResponse, tags=["Job Control"])
+    @app.post(
+        "/jobs/{job_id}/trigger", response_model=JobActionResponse, tags=["Job Control"]
+    )
     async def trigger_job(job_id: str):
         """Manually trigger a job execution."""
         success = await scheduler.trigger_job(job_id)
@@ -205,17 +209,17 @@ def create_api(scheduler: EspressoScheduler) -> FastAPI:
             if not state:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Job '{job_id}' not found"
+                    detail=f"Job '{job_id}' not found",
                 )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Cannot trigger job '{job_id}' - current status: {state.status}"
+                    detail=f"Cannot trigger job '{job_id}' - current status: {state.status}",
                 )
         return JobActionResponse(
             success=True,
             message=f"Job '{job_id}' triggered successfully",
-            job_id=job_id
+            job_id=job_id,
         )
 
     return app

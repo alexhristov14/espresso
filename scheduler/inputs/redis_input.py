@@ -30,7 +30,9 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
             f"(group: {self.consumer_group}, consumer: {self.consumer_name})"
         )
 
-    async def _ensure_connected(self, max_retries: int = 3, retry_delay: float = 2.0) -> bool:
+    async def _ensure_connected(
+        self, max_retries: int = 3, retry_delay: float = 2.0
+    ) -> bool:
         if self.redis_client:
             try:
                 await self.redis_client.ping()
@@ -40,16 +42,14 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
 
         for attempt in range(1, max_retries + 1):
             try:
-                logger.info(
-                    f"Connecting to Redis (attempt {attempt}/{max_retries})..."
-                )
+                logger.info(f"Connecting to Redis (attempt {attempt}/{max_retries})...")
 
                 self.redis_client = redis.Redis(
                     host=self.host,
                     port=self.port,
                     password=self.password,
                     db=self.db,
-                    decode_responses=True
+                    decode_responses=True,
                 )
 
                 await self.redis_client.ping()
@@ -82,7 +82,7 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
                 name=self.stream_name,
                 groupname=self.consumer_group,
                 id=self.start_id,
-                mkstream=True
+                mkstream=True,
             )
             logger.info(f"Created consumer group '{self.consumer_group}'")
         except ResponseError as e:
@@ -123,19 +123,17 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
             response = await self.redis_client.xreadgroup(
                 groupname=self.consumer_group,
                 consumername=self.consumer_name,
-                streams={self.stream_name: '>'},
+                streams={self.stream_name: ">"},
                 count=batch_size,
-                block=100  # Block for 100ms if no messages
+                block=100,  # Block for 100ms if no messages
             )
 
             if response:
                 for stream_name, messages in response:
                     for message_id, data in messages:
-                        items.append({
-                            'id': message_id,
-                            'data': data,
-                            'stream': stream_name
-                        })
+                        items.append(
+                            {"id": message_id, "data": data, "stream": stream_name}
+                        )
 
         except Exception as e:
             logger.error(f"Error polling messages: {e}", exc_info=True)
@@ -155,7 +153,9 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
 
         return items
 
-    async def poll_stream(self, batch_size: int = 10) -> AsyncIterator[List[Dict[str, Any]]]:
+    async def poll_stream(
+        self, batch_size: int = 10
+    ) -> AsyncIterator[List[Dict[str, Any]]]:
         while True:
             batch = await self.poll_batch(batch_size=batch_size)
             if not batch:
@@ -169,22 +169,21 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
         try:
             # Check pending messages for this consumer group
             pending_info = await self.redis_client.xpending(
-                name=self.stream_name,
-                groupname=self.consumer_group
+                name=self.stream_name, groupname=self.consumer_group
             )
-            
-            if pending_info and pending_info.get('pending', 0) > 0:
+
+            if pending_info and pending_info.get("pending", 0) > 0:
                 return True
 
             # Also check for new messages
             response = await self.redis_client.xreadgroup(
                 groupname=self.consumer_group,
                 consumername=self.consumer_name,
-                streams={self.stream_name: '>'},
+                streams={self.stream_name: ">"},
                 count=1,
-                block=0  # Non-blocking
+                block=0,  # Non-blocking
             )
-            
+
             return bool(response and response[0][1])
 
         except Exception as e:
@@ -198,14 +197,10 @@ class EspressoRedisStreamsInputAdapter(EspressoInputAdapter):
             return
 
         try:
-            message_id = msg['id']
-            stream_name = msg.get('stream', self.stream_name)
-            
-            await self.redis_client.xack(
-                stream_name,
-                self.consumer_group,
-                message_id
-            )
+            message_id = msg["id"]
+            stream_name = msg.get("stream", self.stream_name)
+
+            await self.redis_client.xack(stream_name, self.consumer_group, message_id)
         except Exception as e:
             logger.error(f"Error acknowledging message: {e}")
 

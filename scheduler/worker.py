@@ -55,7 +55,9 @@ class EspressoJobExecutor:
                             if asyncio.iscoroutinefunction(func):
                                 await func(items, *job.args, **job.kwargs)
                             else:
-                                await asyncio.to_thread(func, items, *job.args, **job.kwargs) # Run sync function in thread pool
+                                await asyncio.to_thread(
+                                    func, items, *job.args, **job.kwargs
+                                )  # Run sync function in thread pool
 
                             # Acknowledge messages after successful processing
                             await input_manager.ack_batch(input_id, items)

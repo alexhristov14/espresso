@@ -7,6 +7,7 @@ import asyncio
 import json
 from aio_pika import connect_robust, Message
 
+
 async def main():
     # Connect to RabbitMQ and send test messages
     connection = await connect_robust("amqp://guest:guest@rabbitmq-server:5672/")
@@ -34,6 +35,7 @@ async def main():
         await asyncio.sleep(3)
 
     await connection.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

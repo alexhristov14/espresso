@@ -43,7 +43,7 @@ class EspressoScheduler:
         def _callback(fut):
             try:
                 fut.result()
-                
+
                 # Update execution stats
                 end_time = datetime.now()
                 duration = (end_time - start_time).total_seconds()
@@ -71,7 +71,7 @@ class EspressoScheduler:
     async def run_forever(self):
         self._running = True
         logger.info("Scheduler started")
-        
+
         while self._running:
             now = datetime.now()
 
@@ -87,9 +87,13 @@ class EspressoScheduler:
                         if not job_state.is_running:
                             input_id = job.trigger.input_id
 
-                            if job_state.next_run_time and now >= job_state.next_run_time:
-
-                                if input_id and await self.input_manager.has_data(input_id):
+                            if (
+                                job_state.next_run_time
+                                and now >= job_state.next_run_time
+                            ):
+                                if input_id and await self.input_manager.has_data(
+                                    input_id
+                                ):
                                     logger.info(
                                         f"Triggering input-based job {job_id} (scheduled)"
                                     )
@@ -98,7 +102,9 @@ class EspressoScheduler:
                                     logger.debug(
                                         f"No data available for job {job_id}, scheduling next check"
                                     )
-                                    job_state.schedule_next_run(now - timedelta(seconds=1))
+                                    job_state.schedule_next_run(
+                                        now - timedelta(seconds=1)
+                                    )
                         continue
 
                     if job_state.next_run_time is None:
@@ -172,6 +178,8 @@ class EspressoScheduler:
                     await self._run(job_state)
                     return True
                 else:
-                    logger.warning(f"Cannot trigger job {job_id} - status: {job_state.status}")
+                    logger.warning(
+                        f"Cannot trigger job {job_id} - status: {job_state.status}"
+                    )
                     return False
             return False

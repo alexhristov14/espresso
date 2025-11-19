@@ -28,7 +28,9 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
             f"RabbitMQ adapter initialized for queue '{self.queue_name}' (connection pending)"
         )
 
-    async def _ensure_connected(self, max_retries: int = 3, retry_delay: float = 2.0) -> bool:
+    async def _ensure_connected(
+        self, max_retries: int = 3, retry_delay: float = 2.0
+    ) -> bool:
         if (
             self.connection
             and not self.connection.is_closed
@@ -73,9 +75,7 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
 
     async def _setup_queue(self):
         await self.channel.set_qos(prefetch_count=self.prefetch_count)
-        self.queue = await self.channel.declare_queue(
-            self.queue_name, durable=True
-        )
+        self.queue = await self.channel.declare_queue(self.queue_name, durable=True)
 
     async def _close_quietly(self):
         try:
@@ -148,7 +148,7 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
     async def has_data(self) -> bool:
         if not await self._ensure_connected():
             return False
-        
+
         try:
             queue = await self.channel.declare_queue(
                 self.queue_name,

@@ -5,6 +5,7 @@ from .inputs.list_input import EspressoListInputAdapter
 from .inputs.rabbitmq_input import EspressoRabbitMQInputAdapter
 from .inputs.redis_input import EspressoRedisStreamsInputAdapter
 
+
 class EspressoInputManager:
     def __init__(self, inputs: List[EspressoInputDefinition]):
         self.adapters: Dict[str, EspressoInputAdapter] = {}
@@ -72,7 +73,9 @@ class EspressoInputManager:
             for item in items:
                 await adapter.ack(item)
 
-    async def nack_batch(self, input_id: str, items: List[Any], requeue: bool = True) -> None:
+    async def nack_batch(
+        self, input_id: str, items: List[Any], requeue: bool = True
+    ) -> None:
         """
         Negative-acknowledge a batch of messages after failed processing.
         """
@@ -91,19 +94,23 @@ class EspressoInputManager:
     def append_to_input(self, input_id: str, item: Any) -> None:
         if input_id not in self.adapters:
             raise ValueError(f"Input ID '{input_id}' not found")
-        
+
         if self.input_types.get(input_id) != "list":
-            raise ValueError(f"Input '{input_id}' is not a list type. Cannot append items.")
-        
+            raise ValueError(
+                f"Input '{input_id}' is not a list type. Cannot append items."
+            )
+
         adapter = self.adapters[input_id]
         adapter.append_item(item)
 
     def append_items_to_input(self, input_id: str, items: List[Any]) -> None:
         if input_id not in self.adapters:
             raise ValueError(f"Input ID '{input_id}' not found")
-        
+
         if self.input_types.get(input_id) != "list":
-            raise ValueError(f"Input '{input_id}' is not a list type. Cannot append items.")
-        
+            raise ValueError(
+                f"Input '{input_id}' is not a list type. Cannot append items."
+            )
+
         adapter = self.adapters[input_id]
         adapter.append_items(items)

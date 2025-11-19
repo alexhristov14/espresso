@@ -16,6 +16,7 @@ from scheduler.api import create_api  # noqa: E402
 # Only import if available
 try:
     import uvicorn
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -40,23 +41,18 @@ async def main():
     print(f"Loaded {len(jobs)} jobs and {len(inputs)} inputs.")
 
     sched = EspressoScheduler(jobs, inputs, num_workers=10)
-    
+
     if HAS_FASTAPI:
         # Create API app
         app = create_api(sched)
-        
+
         # Configure uvicorn
-        config = uvicorn.Config(
-            app,
-            host="0.0.0.0",
-            port=8000,
-            log_level="info"
-        )
+        config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
         server = uvicorn.Server(config)
-        
+
         print("Starting Espresso Scheduler with API on http://0.0.0.0:8000")
         print("API Documentation: http://0.0.0.0:8000/docs")
-        
+
         # Run both scheduler and API server concurrently
         async with asyncio.TaskGroup() as tg:
             tg.create_task(run_scheduler(sched))
