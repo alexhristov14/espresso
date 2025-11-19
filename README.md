@@ -12,6 +12,7 @@ or loaded from a YAML File.
 - **Async-First**: Built on asyncio for high-performance concurrent execution
 - **Retry Logic**: Automatic retry with configurable delays
 - **Worker Pool**: Configurable concurrent worker execution
+- **🌐 Distributed Mode**: Run on multiple servers with Redis coordination (no duplicate jobs!)
 
 ## Quick Start
 
@@ -96,6 +97,35 @@ async def main():
     sched = EspressoScheduler(jobs, inputs)
     await sched.run_forever()
 ```
+
+## 🌐 Distributed Mode (NEW!)
+
+**Run Espresso on multiple servers with automatic load distribution!**
+
+Enable distributed coordination with just one parameter:
+
+```python
+sched = EspressoScheduler(
+    jobs, 
+    inputs, 
+    redis_url="redis://localhost:6379"  # 👈 Add this!
+)
+```
+
+Now you can run the same scheduler on multiple servers:
+- ✅ Jobs execute exactly once (no duplicates)
+- ✅ Automatic failover if a server crashes
+- ✅ Load distributes across all servers
+- ✅ Shared state via Redis
+
+**📖 Full guide:** [DISTRIBUTED_SETUP.md](DISTRIBUTED_SETUP.md)
+
+**🧪 Quick test:**
+```bash
+python examples/test_distributed.py
+```
+
+---
 
 ## Runtime Control
 
