@@ -29,9 +29,6 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
         )
 
     async def _ensure_connected(self, max_retries: int = 3, retry_delay: float = 2.0) -> bool:
-        """
-        Ensure we have a valid connection and channel. Reconnect if needed.
-        """
         if (
             self.connection
             and not self.connection.is_closed
@@ -75,14 +72,12 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
         return False
 
     async def _setup_queue(self):
-        """Declare queue and set QoS settings."""
         await self.channel.set_qos(prefetch_count=self.prefetch_count)
         self.queue = await self.channel.declare_queue(
             self.queue_name, durable=True
         )
 
     async def _close_quietly(self):
-        """Close connection without raising exceptions."""
         try:
             if self.channel and not self.channel.is_closed:
                 await self.channel.close()
@@ -95,7 +90,6 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
             pass
 
     async def poll(self) -> List[Any]:
-        """Poll for a single message. Returns empty list if RabbitMQ is unavailable."""
         return await self.poll_batch(batch_size=1)
 
     async def poll_batch(self, batch_size: int) -> List[Dict[str, Any]]:
@@ -107,10 +101,7 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
             "body": bytes,
             "message": <AbstractIncomingMessage>,
         }
-
-        If RabbitMQ is unavailable, returns empty list and logs warning.
         """
-        # Ensure we're connected before polling
         if not await self._ensure_connected():
             logger.warning("Cannot poll: RabbitMQ connection unavailable")
             return []
@@ -147,24 +138,14 @@ class EspressoRabbitMQInputAdapter(EspressoInputAdapter):
         return items
 
     async def ack(self, msg: Dict[str, Any]) -> None:
-        """
-        Acknowledge a single message after successful processing.
-        """
         message: AbstractIncomingMessage = msg["message"]
         await message.ack()
 
     async def nack(self, msg: Dict[str, Any], requeue: bool = True) -> None:
-        """
-        Negative-acknowledge a message (optionally requeue).
-        """
         message: AbstractIncomingMessage = msg["message"]
         await message.nack(requeue=requeue)
 
     async def has_data(self) -> bool:
-        """
-        Check if queue has messages without consuming them.
-        Returns False if RabbitMQ is unavailable.
-        """
         if not await self._ensure_connected():
             return False
         

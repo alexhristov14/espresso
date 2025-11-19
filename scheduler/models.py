@@ -1,9 +1,9 @@
 from dataclasses import dataclass
-from typing import Optional, Literal, Any
+from typing import Optional, Literal, Any, AsyncIterable, AsyncIterator
 from datetime import datetime
 
 ScheduleKind = Literal["cron", "interval", "one_off", "on_demand"]
-InputType = Literal["list", "rabbitmq"]
+InputType = Literal["list", "rabbitmq", "redis_streams"]
 TriggerKind = Literal["input"]
 
 
@@ -46,7 +46,7 @@ class EspressoInputDefinition:
 
 @dataclass
 class EspressoListInputDefinition(EspressoInputDefinition):
-    items: list[Any] = None
+    items: AsyncIterator[Any] | AsyncIterable[Any] | list[Any]
 
 
 @dataclass
@@ -54,3 +54,15 @@ class EspressoRabbitMQInputDefinition(EspressoInputDefinition):
     url: str = None
     queue: str = None
     prefetch_count: int = 10
+
+
+@dataclass
+class EspressoRedisStreamsInputDefinition(EspressoInputDefinition):
+    host: str = "localhost"
+    port: int = 6379
+    password: Optional[str] = None
+    db: int = 0
+    stream_name: str = "espresso_stream"
+    consumer_group: str = "espresso_group"
+    consumer_name: str = "worker_1"
+    start_id: str = "0"

@@ -3,7 +3,7 @@ from .models import EspressoInputDefinition
 from .inputs.base import EspressoInputAdapter
 from .inputs.list_input import EspressoListInputAdapter
 from .inputs.rabbitmq_input import EspressoRabbitMQInputAdapter
-
+from .inputs.redis_input import EspressoRedisStreamsInputAdapter
 
 class EspressoInputManager:
     def __init__(self, inputs: List[EspressoInputDefinition]):
@@ -19,6 +19,10 @@ class EspressoInputManager:
                 adapter = EspressoRabbitMQInputAdapter(inp)
                 self.adapters[inp.id] = adapter
                 self.input_types[inp.id] = "rabbitmq"
+            elif inp.type == "redis_streams":
+                adapter = EspressoRedisStreamsInputAdapter(inp)
+                self.adapters[inp.id] = adapter
+                self.input_types[inp.id] = "redis_streams"
             else:
                 raise ValueError(f"Unknown input type: {inp.type}")
 
@@ -63,7 +67,8 @@ class EspressoInputManager:
         if not adapter:
             return
 
-        if self.input_types.get(input_id) == "rabbitmq":
+        input_type = self.input_types.get(input_id)
+        if input_type in ("rabbitmq", "redis_streams"):
             for item in items:
                 await adapter.ack(item)
 
@@ -75,6 +80,30 @@ class EspressoInputManager:
         if not adapter:
             return
 
-        if self.input_types.get(input_id) == "rabbitmq":
+        input_type = self.input_types.get(input_id)
+        if input_type == "rabbitmq":
             for item in items:
                 await adapter.nack(item, requeue=requeue)
+        elif input_type == "redis_streams":
+            for item in items:
+                await adapter.nack(item)
+
+    def append_to_input(self, input_id: str, item: Any) -> None:
+        if input_id not in self.adapters:
+            raise ValueError(f"Input ID '{input_id}' not found")
+        
+        if self.input_types.get(input_id) != "list":
+            raise ValueError(f"Input '{input_id}' is not a list type. Cannot append items.")
+        
+        adapter = self.adapters[input_id]
+        adapter.append_item(item)
+
+    def append_items_to_input(self, input_id: str, items: List[Any]) -> None:
+        if input_id not in self.adapters:
+            raise ValueError(f"Input ID '{input_id}' not found")
+        
+        if self.input_types.get(input_id) != "list":
+            raise ValueError(f"Input '{input_id}' is not a list type. Cannot append items.")
+        
+        adapter = self.adapters[input_id]
+        adapter.append_items(items)

@@ -9,6 +9,7 @@ from .models import (
     EspressoTrigger,
     EspressoListInputDefinition,
     EspressoRabbitMQInputDefinition,
+    EspressoRedisStreamsInputDefinition,
 )
 
 
@@ -34,6 +35,19 @@ def load_jobs_from_yaml(path: str | Path):
                     url=raw_input.get("url"),
                     queue=raw_input.get("queue"),
                     prefetch_count=raw_input.get("prefetch_count", 10),
+                )
+            elif raw_input["type"] == "redis_streams":
+                input_def = EspressoRedisStreamsInputDefinition(
+                    id=raw_input["id"],
+                    type=raw_input["type"],
+                    host=raw_input.get("host", "localhost"),
+                    port=raw_input.get("port", 6379),
+                    password=raw_input.get("password"),
+                    db=raw_input.get("db", 0),
+                    stream_name=raw_input.get("stream_name", "espresso_stream"),
+                    consumer_group=raw_input.get("consumer_group", "espresso_group"),
+                    consumer_name=raw_input.get("consumer_name", "worker_1"),
+                    start_id=raw_input.get("start_id", "0"),
                 )
             else:
                 input_def = EspressoInputDefinition(

@@ -27,3 +27,19 @@ def process_order(order_data: List[str]):
         print(
             f"Processing order: {order_dict['order_id']} for customer {order_dict['customer']} with amount {order_dict['amount']} and items {order_dict['items']}"
         )
+
+
+def process_notification(notifications: List[dict]):
+    """Process notifications from Redis Streams"""
+    for notification in notifications:
+        msg_id = notification.get('id', 'unknown')
+        data = notification.get('data', {})
+        
+        notification_type = data.get('type', 'unknown')
+        user_id = data.get('user_id', 'N/A')
+        message = data.get('message', 'No message')
+        
+        print(f"[Redis Stream] Processing notification {msg_id}")
+        print(f"  Type: {notification_type}")
+        print(f"  User: {user_id}")
+        print(f"  Message: {message}")

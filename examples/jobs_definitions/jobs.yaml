@@ -1,12 +1,15 @@
 inputs:
   - id: some_emails
     type: list
-    items:
-      - "user1@example.com"
-      - "user2@example.com"
-      - "user3@example.com"
-      - "user4@example.com"
-      
+
+  - id: redis_notifications
+    type: redis_streams
+    host: redis-server
+    port: 6379
+    stream_name: notifications_stream
+    consumer_group: notification_processors
+    consumer_name: worker_1
+    start_id: "0"
 
 jobs:
   - id: hello_world_printer_job
@@ -37,8 +40,21 @@ jobs:
       kind: input
       input_id: some_emails
     schedule:
-      kind: interval
-      every_seconds: 20
+      kind: on_demand
     max_retries: 4
     retry_delay_seconds: 90
+    batch_size: 10
+
+  - id: process_redis_notifications_job
+    type: espresso_job
+    module: testing.test
+    function: process_notification
+    trigger:
+      kind: input
+      input_id: redis_notifications
+    schedule:
+      kind: interval
+      every_seconds: 5
+    max_retries: 3
+    retry_delay_seconds: 30
     batch_size: 5

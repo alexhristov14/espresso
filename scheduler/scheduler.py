@@ -1,7 +1,7 @@
 import logging
 import asyncio
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from .models import EspressoJobDefinition, EspressoInputDefinition
 from .runtime import EspressoJobRuntimeState
 from .worker import EspressoJobExecutor
@@ -61,6 +61,12 @@ class EspressoScheduler:
                     state.next_run_time = datetime.now() + timedelta(seconds=delay)
 
         task.add_done_callback(_callback)
+
+    def append_to_input(self, input_id: str, item: Any) -> None:
+        self.input_manager.append_to_input(input_id, item)
+
+    def append_items_to_input(self, input_id: str, items: List[Any]) -> None:
+        self.input_manager.append_items_to_input(input_id, items)
 
     async def run_forever(self):
         self._running = True
