@@ -1,0 +1,12 @@
+pyyaml
+aio-pika
+fastapi
+uvicorn[standard]
+pydantic
+redis
+
+[dev]
+ruff
+pytest
+pytest-asyncio
+requests

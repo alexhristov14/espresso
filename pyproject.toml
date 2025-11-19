@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "espresso-scheduler"
+version = "0.1.0"
+description = "A flexible asynchronous job scheduler with distributed mode, multiple input sources, and runtime control"
+authors = [{ name="Alex Hristov", email="alex-hristov@hotmail.com" }]
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+keywords = ["scheduler", "job", "async", "cron", "distributed", "rabbitmq", "redis"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Framework :: AsyncIO",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "pyyaml",
+    "aio-pika",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "redis",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest",
+    "pytest-asyncio",
+    "requests",
+]
+
+[project.urls]
+Homepage = "https://github.com/alexhristov14/espresso"
+Repository = "https://github.com/alexhristov14/espresso"
+Issues = "https://github.com/alexhristov14/espresso/issues"
+
+[tool.setuptools]
+packages = ["espresso_scheduler", "espresso_scheduler.inputs"]
+package-dir = {"espresso_scheduler" = "src/scheduler"}
+
+[tool.setuptools.package-data]
+scheduler = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["src/scheduler/tests", "src/scheduler/inputs/tests"]
+asyncio_mode = "auto"
+pythonpath = ["src"]
